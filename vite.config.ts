@@ -9,7 +9,7 @@ export default defineConfig({
     open: true,
     proxy: {
       '/api': {
-        target: process.env.VITE_API_BASE_URL || 'https://020417.xyz',
+        target: process.env.VITE_API_BASE_URL,
         changeOrigin: true,
         secure: false
       }

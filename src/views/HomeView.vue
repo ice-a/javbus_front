@@ -1,158 +1,176 @@
 <template>
-  <div class="home">
-    <!-- 搜索区域 -->
-    <div class="search-section card">
-      <h2>搜索视频</h2>
-      <div class="search-form">
-        <div class="form-group">
-          <input 
-            v-model="keyword" 
-            type="text" 
-            class="input" 
-            placeholder="输入视频编号，例如：PPBD-145"
-            @keyup.enter="search"
+  <div class="home-container">
+    <a-layout class="layout">
+      <a-layout-header class="header">
+        <h1 class="title">JAVBUS 搜索工具</h1>
+      </a-layout-header>
+      <a-layout-content class="content">
+        <div class="main-wrapper">
+          <!-- 搜索区域 -->
+          <div class="search-section">
+            <a-card title="搜索视频" class="search-card">
+              <a-form layout="vertical">
+                <a-form-item label="视频编号">
+                  <a-input
+                    v-model:value="keyword"
+                    placeholder="输入视频编号，例如：PPBD-145"
+                    size="large"
+                    @pressEnter="search"
+                    :disabled="loading"
+                  />
+                </a-form-item>
+                <a-form-item>
+                  <a-space>
+                    <a-button
+                      type="primary"
+                      size="large"
+                      @click="search"
+                      :loading="loading"
+                      :disabled="!keyword || loading"
+                    >
+                      {{ loading ? '搜索中...' : '搜索' }}
+                    </a-button>
+                    <a-button
+                      size="large"
+                      @click="clearResults"
+                      v-if="movieData || magnets.length > 0"
+                    >
+                      清空结果
+                    </a-button>
+                  </a-space>
+                </a-form-item>
+              </a-form>
+            </a-card>
+          </div>
+
+          <!-- 错误提示 -->
+          <a-alert
+            v-if="error"
+            :message="error"
+            type="error"
+            show-icon
+            class="error-alert"
           />
-        </div>
-        <div class="form-actions">
-          <button @click="search" :disabled="loading || !keyword" class="btn">
-            {{ loading ? '搜索中...' : '搜索' }}
-          </button>
-          <button @click="clearResults" class="btn btn-secondary" v-if="movieData || magnets.length > 0">
-            清空结果
-          </button>
-        </div>
-      </div>
-    </div>
 
-    <!-- 错误提示 -->
-    <div v-if="error" class="error">
-      {{ error }}
-    </div>
+          <!-- 搜索结果 -->
+          <div v-if="movieData" class="results-section">
+            <!-- 电影信息 -->
+            <a-card title="视频信息" class="result-card">
+              <div class="movie-content">
+                <div class="movie-cover" v-if="movieData.img">
+                  <a-image :src="movieData.img" :alt="movieData.title" />
+                </div>
+                <div class="movie-details">
+                  <h3>{{ movieData.title }}</h3>
+                  <a-descriptions :column="2" size="small" bordered>
+                    <a-descriptions-item label="编号">
+                      {{ movieData.id }}
+                    </a-descriptions-item>
+                    <a-descriptions-item label="日期">
+                      {{ movieData.date }}
+                    </a-descriptions-item>
+                    <a-descriptions-item label="时长">
+                      {{ formatDuration(movieData.videoLength) }}
+                    </a-descriptions-item>
+                    <a-descriptions-item label="导演" v-if="movieData.director">
+                      {{ movieData.director.name }}
+                    </a-descriptions-item>
+                    <a-descriptions-item label="制作商" v-if="movieData.producer">
+                      {{ movieData.producer.name }}
+                    </a-descriptions-item>
+                    <a-descriptions-item label="发行商" v-if="movieData.publisher">
+                      {{ movieData.publisher.name }}
+                    </a-descriptions-item>
+                    <a-descriptions-item label="系列" v-if="movieData.series">
+                      {{ movieData.series.name }}
+                    </a-descriptions-item>
+                    <a-descriptions-item label="类别" :span="2">
+                      {{ getGenresText(movieData.genres) }}
+                    </a-descriptions-item>
+                    <a-descriptions-item label="演员" :span="2">
+                      {{ getStarsText(movieData.stars) }}
+                    </a-descriptions-item>
+                  </a-descriptions>
+                  <div class="action-buttons">
+                    <a-button
+                      type="primary"
+                      size="large"
+                      @click="loadMagnets"
+                      :loading="magnetsLoading"
+                    >
+                      {{ magnetsLoading ? '加载中...' : '下载磁力链接' }}
+                    </a-button>
+                  </div>
+                </div>
+              </div>
+            </a-card>
 
-    <!-- 搜索结果 -->
-    <div v-if="movieData" class="results-section">
-      <!-- 电影信息 -->
-      <div class="movie-info card">
-        <h2>视频信息</h2>
-        <div class="movie-content">
-          <div class="movie-cover" v-if="movieData.img">
-            <img :src="movieData.img" :alt="movieData.title" />
-          </div>
-          <div class="movie-details">
-            <h3>{{ movieData.title }}</h3>
-            <div class="info-grid">
-              <div class="info-item">
-                <span class="label">编号：</span>
-                <span class="value">{{ movieData.id }}</span>
+            <!-- 相似视频 -->
+            <a-card
+              v-if="movieData.similarMovies && movieData.similarMovies.length > 0"
+              title="相似视频"
+              class="result-card"
+            >
+              <div class="similar-grid">
+                <a-card
+                  v-for="similar in movieData.similarMovies"
+                  :key="similar.id"
+                  class="similar-item"
+                  @click="searchSimilar(similar.id)"
+                  hoverable
+                >
+                  <div class="similar-cover">
+                    <a-image :src="similar.img" :alt="similar.title" />
+                  </div>
+                  <div class="similar-title">{{ similar.title }}</div>
+                </a-card>
               </div>
-              <div class="info-item">
-                <span class="label">日期：</span>
-                <span class="value">{{ movieData.date }}</span>
-              </div>
-              <div class="info-item">
-                <span class="label">时长：</span>
-                <span class="value">{{ formatDuration(movieData.videoLength) }}</span>
-              </div>
-              <div class="info-item" v-if="movieData.director">
-                <span class="label">导演：</span>
-                <span class="value">{{ movieData.director.name }}</span>
-              </div>
-              <div class="info-item" v-if="movieData.producer">
-                <span class="label">制作商：</span>
-                <span class="value">{{ movieData.producer.name }}</span>
-              </div>
-              <div class="info-item" v-if="movieData.publisher">
-                <span class="label">发行商：</span>
-                <span class="value">{{ movieData.publisher.name }}</span>
-              </div>
-              <div class="info-item" v-if="movieData.series">
-                <span class="label">系列：</span>
-                <span class="value">{{ movieData.series.name }}</span>
-              </div>
-              <div class="info-item">
-                <span class="label">类别：</span>
-                <span class="value">{{ getGenresText(movieData.genres) }}</span>
-              </div>
-              <div class="info-item">
-                <span class="label">演员：</span>
-                <span class="value">{{ getStarsText(movieData.stars) }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="action-buttons">
-          <button @click="loadMagnets" class="btn" :disabled="magnetsLoading">
-            {{ magnetsLoading ? '加载中...' : '下载磁力链接' }}
-          </button>
-        </div>
-      </div>
+            </a-card>
 
-      <!-- 相似视频 -->
-      <div v-if="movieData.similarMovies && movieData.similarMovies.length > 0" class="similar-movies card">
-        <h3>相似视频</h3>
-        <div class="similar-grid">
-          <div 
-            v-for="similar in movieData.similarMovies" 
-            :key="similar.id" 
-            class="similar-item"
-            @click="searchSimilar(similar.id)"
-          >
-            <div class="similar-cover">
-              <img :src="similar.img" :alt="similar.title" />
-            </div>
-            <div class="similar-title">{{ similar.title }}</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 磁力链接列表 -->
-      <div v-if="magnets.length > 0" class="magnets-section card">
-        <h3>磁力链接 ({{ magnets.length }})</h3>
-        <div class="magnet-filters">
-          <label>
-            <input type="checkbox" v-model="showOnlyHD" />
-            只显示高清
-          </label>
-          <label>
-            <input type="checkbox" v-model="showOnlySubtitle" />
-            只显示有字幕
-          </label>
-          <select v-model="sortBy" class="input" style="width: auto;">
-            <option value="size">按大小排序</option>
-            <option value="date">按时间排序</option>
-            <option value="shareDate">按分享时间排序</option>
-          </select>
-        </div>
-        <div class="magnet-list">
-          <div 
-            v-for="magnet in filteredMagnets" 
-            :key="magnet.id" 
-            class="magnet-item"
-          >
-            <div class="magnet-info">
-              <div class="magnet-title">
-                <span :class="{ 'hd-badge': magnet.isHD }" v-if="magnet.isHD">HD</span>
-                <span :class="{ 'subtitle-badge': magnet.hasSubtitle }" v-if="magnet.hasSubtitle">字幕</span>
-                {{ magnet.title }}
+            <!-- 磁力链接列表 -->
+            <a-card
+              v-if="magnets.length > 0"
+              :title="`磁力链接 (${magnets.length})`"
+              class="result-card"
+            >
+              <div class="magnet-filters">
+                <a-checkbox v-model:checked="showOnlyHD">只显示高清</a-checkbox>
+                <a-checkbox v-model:checked="showOnlySubtitle">只显示有字幕</a-checkbox>
+                <a-select
+                  v-model:value="sortBy"
+                  style="width: 120px"
+                  @change="handleSortChange"
+                >
+                  <a-select-option value="size">按大小排序</a-select-option>
+                  <a-select-option value="date">按时间排序</a-select-option>
+                  <a-select-option value="shareDate">按分享时间排序</a-select-option>
+                </a-select>
               </div>
-              <div class="magnet-details">
-                <span>大小：{{ magnet.size }}</span>
-                <span>分享时间：{{ magnet.shareDate }}</span>
-              </div>
-            </div>
-            <div class="magnet-actions">
-              <button @click="copyMagnet(magnet)" class="btn btn-secondary">复制链接</button>
-              <button @click="downloadMagnet(magnet)" class="btn">下载</button>
-            </div>
+              <a-list item-layout="vertical" :data-source="filteredMagnets">
+                <template #renderItem="{ item }">
+                  <a-list-item>
+                    <a-list-item-meta
+                      :title="renderMagnetTitle(item)"
+                      :description="`大小：${item.size} | 分享时间：${item.shareDate}`"
+                    />
+                    <template #actions>
+                      <a-button size="small" @click="copyMagnet(item)">复制链接</a-button>
+                      <a-button type="primary" size="small" @click="downloadMagnet(item)">下载</a-button>
+                    </template>
+                  </a-list-item>
+                </template>
+              </a-list>
+            </a-card>
           </div>
         </div>
-      </div>
-    </div>
+      </a-layout-content>
+    </a-layout>
   </div>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue';
+import { message } from 'ant-design-vue';
 
 const keyword = ref('');
 const loading = ref(false);
@@ -180,8 +198,10 @@ const search = async () => {
     }
     const data = await response.json();
     movieData.value = data;
+    message.success('搜索成功！');
   } catch (err) {
     error.value = err.message || '搜索出错，请稍后重试';
+    message.error(err.message || '搜索出错，请稍后重试');
   } finally {
     loading.value = false;
   }
@@ -202,8 +222,10 @@ const loadMagnets = async () => {
     }
     const data = await response.json();
     magnets.value = data;
+    message.success(`成功加载 ${data.length} 个磁力链接`);
   } catch (err) {
     error.value = err.message || '加载磁力链接出错';
+    message.error(err.message || '加载磁力链接出错');
   } finally {
     magnetsLoading.value = false;
   }
@@ -221,6 +243,14 @@ const clearResults = () => {
   movieData.value = null;
   magnets.value = [];
   error.value = '';
+};
+
+// 处理排序变化
+const handleSortChange = () => {
+  if (magnets.value.length > 0 && movieData.value) {
+    // 重新加载磁力链接以应用新的排序
+    loadMagnets();
+  }
 };
 
 // 过滤磁力链接
@@ -270,11 +300,19 @@ const getStarsText = (stars) => {
   return stars.map(s => s.name).join('、');
 };
 
+// 渲染磁力链接标题
+const renderMagnetTitle = (magnet) => {
+  const badges = [];
+  if (magnet.isHD) badges.push('[HD]');
+  if (magnet.hasSubtitle) badges.push('[字幕]');
+  return `${badges.join(' ')} ${magnet.title}`;
+};
+
 // 复制磁力链接
 const copyMagnet = async (magnet) => {
   try {
     await navigator.clipboard.writeText(magnet.link);
-    alert('磁力链接已复制到剪贴板！');
+    message.success('磁力链接已复制到剪贴板！');
   } catch (err) {
     // 降级方案
     const textArea = document.createElement('textarea');
@@ -283,7 +321,7 @@ const copyMagnet = async (magnet) => {
     textArea.select();
     document.execCommand('copy');
     document.body.removeChild(textArea);
-    alert('磁力链接已复制到剪贴板！');
+    message.success('磁力链接已复制到剪贴板！');
   }
 };
 
@@ -299,43 +337,75 @@ const downloadMagnet = (magnet) => {
   
   // 尝试直接打开磁力链接
   window.location.href = magnet.link;
+  message.info('正在尝试打开磁力链接...');
 };
 </script>
 
 <style scoped>
-.home {
-  max-width: 100%;
+.home-container {
+  min-height: 100vh;
+  background: #f0f2f5;
 }
 
-.search-section h2,
-.movie-info h2,
-.similar-movies h3,
-.magnets-section h3 {
-  margin-bottom: 1rem;
-  color: #2c3e50;
+.layout {
+  min-height: 100vh;
 }
 
-.search-form {
+.header {
+  background: #fff;
+  border-bottom: 1px solid #e8e8e8;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #1890ff;
+}
+
+.content {
+  padding: 24px;
+  display: flex;
+  justify-content: center;
+}
+
+.main-wrapper {
+  width: 100%;
+  max-width: 1200px;
+}
+
+.search-section {
+  margin-bottom: 24px;
+}
+
+.search-card {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.error-alert {
+  margin-bottom: 24px;
+  border-radius: 8px;
+}
+
+.results-section {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 24px;
 }
 
-.form-group {
-  flex: 1;
+.result-card {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.form-actions {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-/* 电影信息样式 */
 .movie-content {
   display: flex;
-  gap: 1.5rem;
-  margin-bottom: 1rem;
+  gap: 24px;
   flex-wrap: wrap;
 }
 
@@ -343,11 +413,16 @@ const downloadMagnet = (magnet) => {
   flex-shrink: 0;
 }
 
-.movie-cover img {
+.movie-cover :deep(.ant-image) {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.movie-cover :deep(.ant-image-img) {
   width: 200px;
   height: auto;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 .movie-details {
@@ -356,194 +431,108 @@ const downloadMagnet = (magnet) => {
 }
 
 .movie-details h3 {
-  margin-bottom: 1rem;
-  color: #2c3e50;
-  font-size: 1.2rem;
-}
-
-.info-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 0.5rem;
-}
-
-.info-item {
-  display: flex;
-  align-items: baseline;
-}
-
-.label {
-  font-weight: 600;
-  color: #666;
-  min-width: 70px;
-}
-
-.value {
-  color: #333;
+  margin-bottom: 16px;
+  font-size: 20px;
+  color: #1890ff;
 }
 
 .action-buttons {
-  margin-top: 1rem;
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-/* 相似视频样式 */
-.similar-movies {
-  margin-top: 1rem;
+  margin-top: 20px;
 }
 
 .similar-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
 }
 
 .similar-item {
   cursor: pointer;
-  transition: transform 0.2s;
-  border: 1px solid #ddd;
+  transition: all 0.3s;
   border-radius: 8px;
   overflow: hidden;
-  background: white;
 }
 
 .similar-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.similar-cover img {
+.similar-cover :deep(.ant-image-img) {
   width: 100%;
   height: 180px;
   object-fit: cover;
+  border-radius: 8px 8px 0 0;
 }
 
 .similar-title {
-  padding: 0.5rem;
-  font-size: 0.8rem;
-  line-height: 1.3;
+  padding: 8px;
+  font-size: 12px;
+  line-height: 1.4;
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
-  min-height: 2.6em;
-}
-
-/* 磁力链接样式 */
-.magnets-section {
-  margin-top: 1rem;
+  min-height: 32px;
+  background: #fff;
+  border-radius: 0 0 8px 8px;
 }
 
 .magnet-filters {
   display: flex;
-  gap: 1rem;
-  margin-bottom: 1rem;
+  gap: 16px;
+  margin-bottom: 16px;
   flex-wrap: wrap;
   align-items: center;
 }
 
-.magnet-filters label {
+.magnet-filters .ant-checkbox-wrapper {
   display: flex;
   align-items: center;
-  gap: 0.3rem;
-  cursor: pointer;
 }
 
-.magnet-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.magnet-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  background: #fafafa;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.magnet-info {
-  flex: 1;
-  min-width: 200px;
-}
-
-.magnet-title {
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  color: #333;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.hd-badge {
-  background: #42b983;
-  color: white;
-  padding: 0.1rem 0.4rem;
-  border-radius: 4px;
-  font-size: 0.7rem;
-  font-weight: bold;
-}
-
-.subtitle-badge {
-  background: #ff9800;
-  color: white;
-  padding: 0.1rem 0.4rem;
-  border-radius: 4px;
-  font-size: 0.7rem;
-  font-weight: bold;
-}
-
-.magnet-details {
-  font-size: 0.85rem;
-  color: #666;
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.magnet-actions {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+.magnet-filters .ant-select {
+  min-width: 120px;
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
+  .content {
+    padding: 16px;
+  }
+  
   .movie-content {
     flex-direction: column;
   }
   
-  .movie-cover img {
+  .movie-cover :deep(.ant-image-img) {
     width: 100%;
     max-width: 300px;
-  }
-  
-  .info-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .magnet-item {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .magnet-actions {
-    width: 100%;
-    justify-content: flex-end;
   }
   
   .similar-grid {
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   }
+  
+  .magnet-filters {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
 }
-</style>
+
+@media (max-width: 480px) {
+  .header {
+    padding: 0 16px;
+  }
+  
+  .title {
+    font-size: 18px;
+  }
+  
+  .similar-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+</style>  
