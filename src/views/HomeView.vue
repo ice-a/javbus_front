@@ -193,9 +193,9 @@ const search = async () => {
   
   try {
     // 直接调用第三方 API，而不是通过代理
-    const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://av-api.020417.xyz';
+    const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://av-api.020417.xyz/api';
     const response = await fetch(`${apiUrl}/movies/${keyword.value.trim()}`);
-    
+
     if (!response.ok) {
       throw new Error('搜索失败，请检查编号是否正确');
     }
@@ -221,7 +221,7 @@ const loadMagnets = async () => {
   try {
     const { gid, uc } = movieData.value;
     // 直接调用第三方 API，而不是通过代理
-    const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://av-api.020417.xyz';
+    const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://av-api.020417.xyz/api';
     const response = await fetch(`${apiUrl}/magnets/${movieData.value.id}?gid=${gid}&uc=${uc}&sortBy=${sortBy.value}&sortOrder=asc`);
     
     if (!response.ok) {
