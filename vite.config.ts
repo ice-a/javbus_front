@@ -25,27 +25,11 @@ export default defineConfig(({ mode }) => {
     // 开发服务器配置
     server: {
       port: 3000,
-      open: true,
-      proxy: {
-        '/api': {
-          target: env.VITE_API_BASE_URL || 'https://av-api.020417.xyz',
-          changeOrigin: true,
-          secure: false,
-          // rewrite: (path) => path.replace(/^\/api/, '')
-        }
-      }
+      open: true
     },
     // 预览配置
     preview: {
-      port: 3000,
-      proxy: {
-        '/api': {
-          target: env.VITE_API_BASE_URL || 'https://av-api.020417.xyz',
-          changeOrigin: true,
-          secure: false,
-          // rewrite: (path) => path.replace(/^\/api/, '')
-        }
-      }
+      port: 3000
     }
   }
 })
