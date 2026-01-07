@@ -28,7 +28,7 @@ export default defineConfig(({ mode }) => {
       open: true,
       proxy: {
         '/api': {
-          target: env.VITE_API_BASE_URL,
+          target: env.VITE_API_BASE_URL || 'https://av-api.020417.xyz',
           changeOrigin: true,
           secure: false,
           // rewrite: (path) => path.replace(/^\/api/, '')
@@ -40,7 +40,7 @@ export default defineConfig(({ mode }) => {
       port: 3000,
       proxy: {
         '/api': {
-          target: env.VITE_API_BASE_URL,
+          target: env.VITE_API_BASE_URL || 'https://av-api.020417.xyz',
           changeOrigin: true,
           secure: false,
           // rewrite: (path) => path.replace(/^\/api/, '')
