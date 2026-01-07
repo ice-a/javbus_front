@@ -193,10 +193,17 @@ const search = async () => {
   
   try {
     const response = await fetch(`/api/movies/${keyword.value.trim()}`);
+    // 打印搜索地址
+    // console.log('搜索地址:', `/api/movies/${keyword.value.trim()}`);
+    // console.log('VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL);
     if (!response.ok) {
       throw new Error('搜索失败，请检查编号是否正确');
     }
     const data = await response.json();
+    // 打印搜索结果
+    // 打印env.VITE_API_BASE_URL
+    
+    console.log('搜索结果:', data);
     movieData.value = data;
     message.success('搜索成功！');
   } catch (err) {

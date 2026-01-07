@@ -1,5 +1,4 @@
 {
-  "files": [],
   "compilerOptions": {
     "target": "ESNext",
     "useDefineForClassFields": true,
@@ -12,7 +11,7 @@
     "esModuleInterop": true,
     "lib": ["ESNext", "DOM"],
     "skipLibCheck": true,
-    "noImplicitAny": true, // 这个配置会严格检查any类型，也是触发该错误的原因之一
+    "noImplicitAny": true,
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
@@ -20,16 +19,8 @@
   },
   "include": [
     "src/**/*.ts",
-    "src/**/*.d.ts", // 包含所有.d.ts声明文件
+    "src/**/*.d.ts",
     "src/**/*.tsx",
-    "src/**/*.vue"  // 包含所有.vue文件
-  ],
-  "references": [
-    {
-      "path": "./tsconfig.node.json"
-    },
-    {
-      "path": "./tsconfig.app.json"
-    }
+    "src/**/*.vue"
   ]
 }
