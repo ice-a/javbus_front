@@ -192,9 +192,8 @@ const search = async () => {
   magnets.value = [];
   
   try {
-    // 直接调用第三方 API，而不是通过代理
-    const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://av-api.020417.xyz';
-    const response = await fetch(`${apiUrl}/api/movies/${keyword.value.trim()}`);
+    // 通过 Vercel 代理请求，避免 CORS 问题
+    const response = await fetch(`/api/movies/${keyword.value.trim()}`);
 
     if (!response.ok) {
       throw new Error('搜索失败，请检查编号是否正确');
@@ -220,9 +219,8 @@ const loadMagnets = async () => {
   
   try {
     const { gid, uc } = movieData.value;
-    // 直接调用第三方 API，而不是通过代理
-    const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://av-api.020417.xyz';
-    const response = await fetch(`${apiUrl}/api/magnets/${movieData.value.id}?gid=${gid}&uc=${uc}&sortBy=${sortBy.value}&sortOrder=asc`);
+    // 通过 Vercel 代理请求，避免 CORS 问题
+    const response = await fetch(`/api/magnets/${movieData.value.id}?gid=${gid}&uc=${uc}&sortBy=${sortBy.value}&sortOrder=asc`);
     
     if (!response.ok) {
       throw new Error('加载磁力链接失败');
@@ -320,7 +318,7 @@ const copyMagnet = async (magnet) => {
   try {
     await navigator.clipboard.writeText(magnet.link);
     message.success('磁力链接已复制到剪贴板！');
-  } catch (err) {
+  } catch {
     // 降级方案
     const textArea = document.createElement('textarea');
     textArea.value = magnet.link;
@@ -542,4 +540,4 @@ const downloadMagnet = (magnet) => {
     grid-template-columns: repeat(2, 1fr);
   }
 }
-</style>  
+</style>
