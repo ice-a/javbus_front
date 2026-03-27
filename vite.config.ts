@@ -3,8 +3,8 @@ import vue from '@vitejs/plugin-vue'
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
+  const apiTarget = (loadEnv(mode, process.cwd(), '').VITE_API_BASE_URL || 'https://av-api.020417.xyz').replace(/\/api\/?$/, '')
   // 加载环境变量
-  const env = loadEnv(mode, process.cwd(), '')
   
   return {
     plugins: [vue()],
@@ -25,7 +25,13 @@ export default defineConfig(({ mode }) => {
     // 开发服务器配置
     server: {
       port: 3000,
-      open: true
+      open: true,
+      proxy: {
+        '/api': {
+          target: apiTarget,
+          changeOrigin: true
+        }
+      }
     },
     // 预览配置
     preview: {

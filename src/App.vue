@@ -4,67 +4,75 @@
   </div>
 </template>
 
-<script setup lang="ts">
-// 主应用组件 - 使用 Ant Design Vue 的路由视图
-</script>
+<script setup lang="ts"></script>
 
 <style>
-/* 全局样式重置 */
+:root {
+  color: #1f1b16;
+  background: #f5f0e4;
+  font-family:
+    Georgia,
+    'Times New Roman',
+    'PingFang SC',
+    'Hiragino Sans GB',
+    'Microsoft YaHei',
+    serif;
+  line-height: 1.5;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 * {
-  margin: 0;
-  padding: 0;
   box-sizing: border-box;
 }
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-  background-color: #f0f2f5;
-}
-
+html,
+body,
 #app {
-  min-height: 100vh;
+  min-height: 100%;
+  margin: 0;
 }
 
-/* 确保 Ant Design Vue 组件样式正常显示 */
-.ant-layout {
+body {
   min-height: 100vh;
+  background: #f5f0e4;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
 }
 
 .ant-btn {
-  border-radius: 6px;
+  border-radius: 10px;
+  box-shadow: none;
 }
 
 .ant-input,
-.ant-input-password {
-  border-radius: 6px;
+.ant-input-affix-wrapper,
+.ant-select-selector {
+  border-radius: 10px !important;
 }
 
-.ant-card {
-  border-radius: 8px;
-}
-
-.ant-descriptions-bordered .ant-descriptions-item-label,
-.ant-descriptions-bordered .ant-descriptions-item-content {
-  border: 1px solid #f0f0f0;
-}
-
-/* 滚动条样式 */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 4px;
+  background: rgba(76, 57, 39, 0.08);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 4px;
+  background: rgba(124, 47, 26, 0.32);
+  border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+  background: rgba(124, 47, 26, 0.46);
 }
 </style>
