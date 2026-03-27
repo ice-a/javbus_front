@@ -73,12 +73,11 @@
         <div class="poster-card">
           <div class="poster-frame">
             <img
-              v-if="!movieCoverState.failed && movieCoverState.src"
+              v-if="movieData.img"
               class="poster-img"
-              :src="movieCoverState.src"
+              :src="movieData.img"
               :alt="movieData.title"
               referrerpolicy="no-referrer"
-              @error="handleMovieImageError"
             />
             <div v-else class="poster-placeholder">
               <PictureOutlined />
@@ -171,16 +170,11 @@
           >
             <div class="similar-img-wrap">
               <img
-                v-if="
-                  similarCoverStates[similar.id] &&
-                  !similarCoverStates[similar.id].failed &&
-                  similarCoverStates[similar.id].src
-                "
+                v-if="similar.img"
                 class="similar-img"
-                :src="similarCoverStates[similar.id].src"
+                :src="similar.img"
                 :alt="similar.title"
                 referrerpolicy="no-referrer"
-                @error="handleSimilarImageError(similar.id)"
               />
               <div v-else class="similar-placeholder">
                 <PictureOutlined />
@@ -243,7 +237,6 @@ import {
   ExportOutlined,
 } from '@ant-design/icons-vue'
 
-const RANDOM_IMAGE_URL = 'https://i.mukyu.ru/random?r18=1'
 const exampleCodes = ['PPBD-145', 'SSIS-001', 'IPX-811', 'JUL-757']
 
 const keyword = ref('')
@@ -254,61 +247,6 @@ const movieData = ref(null)
 const magnets = ref([])
 const showOnlyHD = ref(false)
 const showOnlySubtitle = ref(false)
-const sortBy = ref('size')
-const movieCoverState = ref(createImageState())
-const similarCoverStates = ref({})
-
-function getRandomImageUrl(key = '') {
-  const cacheBust = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-  const seed = key ? `&seed=${encodeURIComponent(key)}` : ''
-  return `${RANDOM_IMAGE_URL}${seed}&t=${cacheBust}`
-}
-
-function createImageState(src = '', key = '') {
-  const normalizedSrc = typeof src === 'string' ? src.trim() : ''
-
-  if (normalizedSrc) {
-    return {
-      src: normalizedSrc,
-      randomTried: false,
-      failed: false,
-    }
-  }
-
-  return {
-    src: getRandomImageUrl(key),
-    randomTried: true,
-    failed: false,
-  }
-}
-
-function resetImageStates() {
-  movieCoverState.value = createImageState()
-  similarCoverStates.value = {}
-}
-
-function initImageStates(data) {
-  movieCoverState.value = createImageState(data?.img, data?.id || 'movie')
-  similarCoverStates.value = Object.fromEntries(
-    (data?.similarMovies || []).map((similar) => [
-      similar.id,
-      createImageState(similar.img, similar.id),
-    ]),
-  )
-}
-
-function useRandomFallback(state, key = '') {
-  if (!state || state.failed) return
-
-  if (!state.randomTried) {
-    state.src = getRandomImageUrl(key)
-    state.randomTried = true
-    return
-  }
-
-  state.src = ''
-  state.failed = true
-}
 
 function getErrorMessage(err, fallback) {
   return err instanceof Error ? err.message : fallback
@@ -339,16 +277,6 @@ async function parseApiResponse(response, fallbackMessage) {
   throw new Error(preview || fallbackMessage)
 }
 
-const movieFacts = computed(() => {
-  if (!movieData.value) return []
-
-  return [
-    { label: '日期', value: movieData.value.date || '未知' },
-    { label: '时长', value: formatDuration(movieData.value.videoLength) },
-    { label: '导演', value: movieData.value.director?.name || '未知' },
-  ]
-})
-
 const filteredMagnets = computed(() => {
   let result = [...magnets.value]
 
@@ -360,32 +288,8 @@ const filteredMagnets = computed(() => {
     result = result.filter((item) => item.hasSubtitle)
   }
 
-  result.sort((a, b) => {
-    if (sortBy.value === 'size') {
-      return (b.numberSize || 0) - (a.numberSize || 0)
-    }
-
-    if (sortBy.value === 'date') {
-      return new Date(b.date || 0) - new Date(a.date || 0)
-    }
-
-    if (sortBy.value === 'shareDate') {
-      return new Date(b.shareDate || 0) - new Date(a.shareDate || 0)
-    }
-
-    return 0
-  })
-
   return result
 })
-
-const handleMovieImageError = () => {
-  useRandomFallback(movieCoverState.value, movieData.value?.id || 'movie')
-}
-
-const handleSimilarImageError = (id) => {
-  useRandomFallback(similarCoverStates.value[id], id)
-}
 
 const applyExample = (value) => {
   keyword.value = value
@@ -399,13 +303,11 @@ const search = async () => {
   error.value = ''
   movieData.value = null
   magnets.value = []
-  resetImageStates()
 
   try {
     const response = await fetch(`/api/movies/${keyword.value.trim()}`)
     const data = await parseApiResponse(response, '搜索失败，请检查编号是否正确')
     movieData.value = data
-    initImageStates(data)
     message.success('搜索成功')
   } catch (err) {
     const fallback = '搜索出错，请稍后重试'
@@ -424,9 +326,7 @@ const loadMagnets = async () => {
 
   try {
     const { gid, uc, id } = movieData.value
-    const response = await fetch(
-      `/api/magnets/${id}?gid=${gid}&uc=${uc}&sortBy=${sortBy.value}&sortOrder=asc`,
-    )
+    const response = await fetch(`/api/magnets/${id}?gid=${gid}&uc=${uc}`)
     const data = await parseApiResponse(response, '加载磁力链接失败')
     magnets.value = Array.isArray(data) ? data : []
     message.success(`成功加载 ${magnets.value.length} 条磁力链接`)
@@ -449,13 +349,6 @@ const clearResults = () => {
   error.value = ''
   movieData.value = null
   magnets.value = []
-  resetImageStates()
-}
-
-const handleSortChange = () => {
-  if (magnets.value.length > 0 && movieData.value) {
-    loadMagnets()
-  }
 }
 
 const formatDuration = (minutes) => {
