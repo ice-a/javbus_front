@@ -8,15 +8,11 @@
 
 <style>
 :root {
-  color: #1f1b16;
-  background: #f5f0e4;
+  color: #f5f5f7;
+  background: #0a0a0f;
   font-family:
-    Georgia,
-    'Times New Roman',
-    'PingFang SC',
-    'Hiragino Sans GB',
-    'Microsoft YaHei',
-    serif;
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', sans-serif;
   line-height: 1.5;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -37,7 +33,7 @@ body,
 
 body {
   min-height: 100vh;
-  background: #f5f0e4;
+  background: #0a0a0f;
 }
 
 button,
@@ -58,21 +54,25 @@ textarea {
   border-radius: 10px !important;
 }
 
+.ant-checkbox-wrapper {
+  color: #8e8e93;
+}
+
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(76, 57, 39, 0.08);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(124, 47, 26, 0.32);
+  background: rgba(255, 255, 255, 0.15);
   border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(124, 47, 26, 0.46);
+  background: rgba(255, 255, 255, 0.25);
 }
 </style>
